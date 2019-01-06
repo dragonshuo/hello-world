@@ -1,0 +1,138 @@
+code
+//------------------
+#include<stdio.h>
+#include<stdlib.h>
+#define TRUE 1
+#define FALSE 0
+#define OK 1
+#define ERROR 0
+#define INFEASIBLE -1
+#define OVERFLOW -2
+typedef int Status;
+typedef int SElemType;
+typedef int OperandType;
+#define STACK_INIT_SIZE 100
+#define STACKINCREMENT  10
+char law[7][7]={{'>','>','<','<','<','>','>'},
+				{'>','>','<','<','<','>','>'},
+				{'>','>','>','>','<','>','>'},
+				{'>','>','>','>','<','>','>'},
+				{'<','<','<','<','<','=',0},
+				{'>','>','>','>',0,'>','>'},
+				{'<','<','<','<','<',0,'='}};
+typedef struct SqStack
+{ 
+	int *base;
+	int *top;
+	int stacksize;
+}SqStack;
+Status InitStack(SqStack &S)//构造一个栈
+{
+	S.base = (SElemType *)malloc(STACK_INIT_SIZE *sizeof(SElemType));
+	if(!S.base) exit(OVERFLOW);//储存分配失败
+	S.top =S.base;
+	S.stacksize =STACK_INIT_SIZE;
+	return OK;
+}
+Status GetTop(SqStack S,SElemType &e)//若栈不为空，则用e返回S的栈顶元素，并返回Ok，否则返回error
+{
+	if(S.top==S.base)return ERROR;
+	else{e = *(S.top-1);}
+	return e;
+}
+Status Push(SqStack &S,SElemType e)//插入元素e为新的栈顶元素
+{
+	if(S.top-S.base>=S.stacksize)//栈满，追加储存空间
+	{
+		S.base =(SElemType *)realloc(S.base,(S.stacksize+STACKINCREMENT)*sizeof(SElemType));
+		if(!S.base)exit(OVERFLOW);//储存分配失败
+		{
+			S.top=S.base+S.stacksize;
+			S.stacksize=S.stacksize+STACKINCREMENT;
+		}
+	}	
+	*S.top++=e;
+	return OK;
+}
+Status Pop(SqStack &S,SElemType &e)//若栈不为空，则删除S的栈顶元素，用e返回其值，并返回OK，否则返回ERROR
+{
+	if(S.top==S.base)return ERROR;
+	S.top=S.top-1;
+	e=*S.top;
+	return OK;
+}
+bool IN(char c)
+{
+	if(c<48||c>57){return TRUE;}
+	else {return FALSE;}
+}
+char Precede(int a,int b)
+{
+	int x,y;
+	switch(a)
+	{
+	case 43:x=0;break;
+	case 45:x=1;break;
+	case 42:x=2;break;
+	case 47:x=3;break;
+	case 40:x=4;break;
+	case 41:x=5;break;
+	case 35:x=6;break;
+	default:printf("error\n");
+	}
+	switch(b)
+	{
+	case 43:y=0;break;
+	case 45:y=1;break;
+	case 42:y=2;break;
+	case 47:y=3;break;
+	case 40:y=4;break;
+	case 41:y=5;break;
+	case 35:y=6;break;
+	default:printf("error\n");
+	}
+	return law[x][y];
+}
+int Operate(int a,int theta,int b)
+{
+	int jie;
+	switch(theta)
+	{
+	case 43:jie=a+b;break;//a big
+	case 45:jie=a-b;break;
+	case 42:jie=a*b;break;//b big
+	case 47:jie=a/b;break;
+	default:printf("计算错误\n");
+	}
+	return jie;
+}
+
+int main()
+{
+	char c;
+	int e,x,a,b,theta;
+	SqStack OPTR;SqStack OPND;
+	InitStack(OPTR);Push(OPTR,'#');//optr符号栈
+	InitStack(OPND);c=getchar();
+	while(c!='#'||GetTop(OPTR,e)!='#')
+	{
+		if(!IN(c))
+		{
+			int math=c-48;
+			Push(OPND,math);
+			c=getchar();
+		}
+		else
+		{
+			GetTop(OPTR,e);
+			switch(Precede(e,c))
+			{
+			case'<':Push(OPTR,c);c=getchar();break;
+			case'=':Pop(OPTR,x);c=getchar();break;
+			case'>':Pop(OPTR,theta);Pop(OPND,b);Pop(OPND,a);Push(OPND,Operate(a,theta,b));break;
+			}
+		}
+	}
+	printf("%d\n",GetTop(OPND,e));
+	return 0;
+}
